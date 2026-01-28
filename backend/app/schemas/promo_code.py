@@ -1,4 +1,6 @@
 """Pydantic schemas for PromoCode model."""
+from typing import Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -14,7 +16,7 @@ class PromoCodeResponse(BaseModel):
     code: str
     discount_percentage: float
     is_valid: bool
-    message: str | None = None
+    message: Optional[str] = None
 
     class Config:
         from_attributes = True

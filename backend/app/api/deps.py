@@ -1,5 +1,5 @@
 """Dependency injection for API routes."""
-from typing import Annotated
+from typing import Annotated, Optional
 
 from fastapi import Depends, Header
 from jose import JWTError
@@ -13,7 +13,7 @@ from app.models.user import User
 
 
 def get_current_user(
-    authorization: Annotated[str | None, Header()] = None,
+    authorization: Annotated[Optional[str], Header()] = None,
     db: Session = Depends(get_db)
 ) -> User:
     """
