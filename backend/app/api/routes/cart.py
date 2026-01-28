@@ -3,6 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session, joinedload
+import sentry_sdk
 
 from app.api.deps import get_current_user
 from app.core.exceptions import OutOfStockError, CartNotFoundError
@@ -93,52 +94,63 @@ def add_to_cart(
     Raises:
         OutOfStockError: If requested quantity exceeds available stock
     """
-    # Get or create cart
-    cart = get_or_create_cart(db, current_user)
+    with sentry_sdk.start_span(op="cart.add_item", description="Add item to cart") as span:
+        span.set_data("product_id", item_data.product_id)
+        span.set_data("quantity", item_data.quantity)
+        span.set_data("user_id", current_user.id)
 
-    # Check if product exists and has sufficient stock
-    product = db.query(Product).filter(Product.id == item_data.product_id).first()
-    if not product:
-        raise OutOfStockError("Product not found")
+        # Get or create cart
+        cart = get_or_create_cart(db, current_user)
 
-    # Check if item already exists in cart
-    existing_item = db.query(CartItem)\
-        .filter(CartItem.cart_id == cart.id, CartItem.product_id == item_data.product_id)\
-        .first()
+        # Check if product exists and has sufficient stock
+        with sentry_sdk.start_span(op="db.query", description="Check product stock"):
+            product = db.query(Product).filter(Product.id == item_data.product_id).first()
+            if not product:
+                raise OutOfStockError("Product not found")
 
-    if existing_item:
-        # Increment quantity
-        new_quantity = existing_item.quantity + item_data.quantity
-        if new_quantity > product.stock:
-            raise OutOfStockError(
-                f"Only {product.stock} units available. You already have {existing_item.quantity} in your cart."
-            )
-        existing_item.quantity = new_quantity
-    else:
-        # Check stock availability
-        if item_data.quantity > product.stock:
-            raise OutOfStockError(f"Only {product.stock} units available")
+        # Check if item already exists in cart
+        with sentry_sdk.start_span(op="db.query", description="Check existing cart item"):
+            existing_item = db.query(CartItem)\
+                .filter(CartItem.cart_id == cart.id, CartItem.product_id == item_data.product_id)\
+                .first()
 
-        # Create new cart item
-        new_item = CartItem(
-            cart_id=cart.id,
-            product_id=item_data.product_id,
-            quantity=item_data.quantity
-        )
-        db.add(new_item)
+        if existing_item:
+            # Increment quantity
+            with sentry_sdk.start_span(op="cart.update_quantity", description="Update cart item quantity"):
+                new_quantity = existing_item.quantity + item_data.quantity
+                if new_quantity > product.stock:
+                    raise OutOfStockError(
+                        f"Only {product.stock} units available. You already have {existing_item.quantity} in your cart."
+                    )
+                existing_item.quantity = new_quantity
+        else:
+            # Check stock availability
+            if item_data.quantity > product.stock:
+                raise OutOfStockError(f"Only {product.stock} units available")
 
-    db.commit()
+            # Create new cart item
+            with sentry_sdk.start_span(op="cart.create_item", description="Create new cart item"):
+                new_item = CartItem(
+                    cart_id=cart.id,
+                    product_id=item_data.product_id,
+                    quantity=item_data.quantity
+                )
+                db.add(new_item)
 
-    # Return updated cart with eager loading
-    cart = db.query(Cart)\
-        .filter(Cart.id == cart.id)\
-        .options(
-            joinedload(Cart.items).joinedload(CartItem.product),
-            joinedload(Cart.saved_items).joinedload(SavedItem.product)
-        )\
-        .first()
+        with sentry_sdk.start_span(op="db.commit", description="Save cart changes"):
+            db.commit()
 
-    return cart
+        # Return updated cart with eager loading
+        with sentry_sdk.start_span(op="db.query", description="Load cart with items"):
+            cart = db.query(Cart)\
+                .filter(Cart.id == cart.id)\
+                .options(
+                    joinedload(Cart.items).joinedload(CartItem.product),
+                    joinedload(Cart.saved_items).joinedload(SavedItem.product)
+                )\
+                .first()
+
+        return cart
 
 
 @router.put("/items/{item_id}", response_model=CartResponse)

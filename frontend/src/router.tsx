@@ -10,6 +10,7 @@ import Products from './pages/Products'
 import ProductDetail from './pages/ProductDetail'
 import Cart from './pages/Cart'
 import Notfound from './pages/Notfound'
+import SentryDebug from './pages/SentryDebug'
 
 const router = createBrowserRouter([
   {
@@ -67,6 +68,14 @@ const router = createBrowserRouter([
     element: (
       <Layout>
         <Cart />
+      </Layout>
+    ),
+  },
+  {
+    path: '/sentry-debug',
+    element: (
+      <Layout>
+        <SentryDebug />
       </Layout>
     ),
   },

@@ -50,6 +50,8 @@ app.add_middleware(
     max_age=3600,  # Cache preflight requests for 1 hour
 )
 
+
+
 # Include routers
 app.include_router(auth.router, prefix="/api")
 app.include_router(products.router, prefix="/api")
@@ -68,6 +70,9 @@ def root():
         "version": "1.0.0",
     }
 
+@app.get("/sentry-debug")
+def trigger_error():
+    division_by_zero = 1 / 0
 
 @app.get("/health")
 def health_check():

@@ -14,33 +14,11 @@ import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
 import Orders from './pages/Orders'
 import OrderDetail from './pages/OrderDetail'
+import SentryDebug from './pages/SentryDebug'
 import { ProtectedRoute } from './components/auth/ProtectedRoute'
 import MiniCart from './components/cart/MiniCart'
 import { productService } from './services/product.service'
 import type { Product } from './types/product.types'
-import * as Sentry from "@sentry/react";
-
-Sentry.init({
-  dsn: "https://02c008efea5afb429db5f57b44243cb2@o88872.ingest.us.sentry.io/4510789878153216",
-  // Setting this option to true will send default PII data to Sentry.
-  // For example, automatic IP address collection on events
-  sendDefaultPii: true,
-  integrations: [
-    Sentry.browserTracingIntegration(),
-    Sentry.replayIntegration()
-  ],
-  // Tracing
-  tracesSampleRate: 1.0, //  Capture 100% of the transactions
-  // Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
-  tracePropagationTargets: ["localhost", /^https:\/\/yourserver\.io\/api/],
-  // Session Replay
-  replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
-  replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.,
-  // Enable logs to be sent to Sentry
-  enableLogs: true
-});
-
-
 
 const PRODUCTS = [
   { id: 1, name: "Sahara Duffel Bag", price: 120.00, category: "Popular", img: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=600" },
@@ -163,49 +141,52 @@ const SearchPage = () => {
 
 export default function VoyagerApp() {
   return (
-    <BrowserRouter>
-      <Navigation />
-      <Routes>
-        <Route path="/" element={<><Hero />{/* Render product list here */}</>} />
-        <Route path="/products" element={<Products />} />
-        <Route path="/products/:id" element={<ProductDetail />} />
-        <Route path="/search" element={<SearchPage />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route
-          path="/checkout"
-          element={
-            <ProtectedRoute>
-              <Checkout />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/orders"
-          element={
-            <ProtectedRoute>
-              <Orders />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/orders/:orderId"
-          element={
-            <ProtectedRoute>
-              <OrderDetail />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route
-          path="/account"
-          element={
-            <ProtectedRoute>
-              <Account />
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <Navigation />
+        <Routes>
+          <Route path="/" element={<><Hero />{/* Render product list here */}</>} />
+          <Route path="/products" element={<Products />} />
+          <Route path="/products/:id" element={<ProductDetail />} />
+          <Route path="/search" element={<SearchPage />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route
+            path="/checkout"
+            element={
+              <ProtectedRoute>
+                <Checkout />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/orders"
+            element={
+              <ProtectedRoute>
+                <Orders />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/orders/:orderId"
+            element={
+              <ProtectedRoute>
+                <OrderDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route
+            path="/account"
+            element={
+              <ProtectedRoute>
+                <Account />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/sentry-debug" element={<SentryDebug />} />
+        </Routes>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }

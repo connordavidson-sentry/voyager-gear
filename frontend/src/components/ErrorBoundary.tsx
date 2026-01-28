@@ -1,5 +1,6 @@
 import type { ErrorInfo, ReactNode } from 'react'
 import React, { Component } from 'react'
+import * as Sentry from '@sentry/react'
 
 interface Props {
   children?: ReactNode
@@ -16,13 +17,16 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo): void {
+    console.log('ErrorBoundary caught error:', error);
     this.setState({ error, info })
+    console.log('Sending error to Sentry...');
+    Sentry.captureException(error);
+    console.log('Error sent to Sentry');
   }
 
   render(): ReactNode {
     const { error } = this.state
     if (error) {
-      //Sentry.captureException(error)
       return <ErrorBoundaryFallbackComponent />
     }
     return this.props.children

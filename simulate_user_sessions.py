@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Optional, List, Dict
 import string
 
-API_BASE_URL = "http://localhost:5001"
+API_BASE_URL = "http://localhost:5000"
 CHECKOUT_SERVICE_URL = "http://localhost:5002"
 
 class UserSessionSimulator:

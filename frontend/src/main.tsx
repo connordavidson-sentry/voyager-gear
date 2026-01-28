@@ -1,6 +1,23 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import './global.css'
+import * as Sentry from "@sentry/react";
+
+// Initialize Sentry before the app renders
+Sentry.init({
+  dsn: "https://02c008efea5afb429db5f57b44243cb2@o88872.ingest.us.sentry.io/4510789878153216",
+  integrations: [
+    Sentry.browserTracingIntegration(),
+    Sentry.replayIntegration()
+  ],
+  tracesSampleRate: 1.0,
+  replaysSessionSampleRate: 0.1,
+  replaysOnErrorSampleRate: 1.0,
+  environment: "development",
+  debug: true, // Enable debug mode to see what Sentry is doing
+});
+
+console.log('Sentry initialized with DSN:', Sentry.getClient()?.getOptions().dsn);
 
 import VoyagerApp from './App'
 import { AuthProvider } from './contexts/AuthProvider'
